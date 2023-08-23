@@ -1,0 +1,84 @@
+/*!
+ * MindPlus
+ * nano
+ *
+ */
+#include <DFRobot_Servo.h>
+#include <DFRobot_HuskyLens.h>
+// Function declaration
+void DF_adelante();
+void DF_reversa();
+void DF_stop();
+void timer();
+
+// Create an object
+Servo servo_9;
+double error = 0;
+double lasterror = 0;
+double kp = 0.5;
+double kd = 7;
+double correction = 0;
+double derivative = 0;
+double steer = 0;
+double seconds = 0;
+
+
+
+// Main program start
+void setup() {
+  delay(2000);
+  huskylens.beginI2CUntilSuccess();
+	huskylens.writeAlgorithm(ALGORITHM_COLOR_RECOGNITION);
+	servo_9.attach(9);
+	
+}
+void loop() {
+timer();
+DF_adelante();
+error = (analogRead(A7)/100) - (analogRead(A6)/100);
+correction = error*kp;
+derivative = (error - lasterror)*kd;
+steer = correction + derivative;
+lasterror = error;
+servo_9.angle(abs((steer*(180/3.1416))+70));
+if (huskylens.isAppear(1,HUSKYLENSResultBlock)) {
+		DF_adelante();
+		servo_9.angle(abs(30));
+		delay(1000);
+	}
+	else if (huskylens.isAppear(2,HUSKYLENSResultBlock)) {
+		DF_adelante();
+		servo_9.angle(abs(90));
+		delay(1000);
+	}
+
+
+}
+
+
+// Custom function
+void DF_adelante() {
+	digitalWrite(10, HIGH);
+	digitalWrite(11, LOW);
+	digitalWrite(12, HIGH);
+}
+void DF_reversa() {
+	digitalWrite(10, HIGH);
+	digitalWrite(11, HIGH);
+	digitalWrite(12, LOW);
+}
+void DF_stop() {
+	digitalWrite(10, LOW);
+	digitalWrite(11, LOW);
+	digitalWrite(12, HIGH);
+}
+void timer() {
+	if ((seconds==5300)) {
+	  DF_stop();
+	}
+	else {
+	  DF_adelante();
+	  seconds=(seconds + 1);
+	  delay(10);
+	}
+}
